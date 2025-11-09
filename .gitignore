@@ -1,0 +1,22 @@
+﻿# Build outputs
+**/target/
+**/*.log
+
+# IDE
+.idea/
+.vscode/
+
+# Maven/Java metadata
+**/.classpath
+**/.project
+**/.settings/
+**/*.iml
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Env files (never commit real secrets)
+.env
+infra/.env
+infra/.env.*.local
