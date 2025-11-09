@@ -62,10 +62,11 @@ services:
     image: mysql:8.0
     container_name: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: 
-      MYSQL_DATABASE: quiz_auth
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
+      MYSQL_DATABASE: live_quiz            
     volumes:
       - mysql_data:/var/lib/mysql
+      - ../infra/db:/docker-entrypoint-initdb.d 
     ports:
       - "3306:3306" # dev only
     networks: [quiznet]
