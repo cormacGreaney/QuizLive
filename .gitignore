@@ -20,6 +20,10 @@ Thumbs.db
 .env
 infra/.env
 infra/.env.*.local
+frontend/.env
+auth-service/.env
+qms-service/.env
+rts-service/.env
 
 # Node
 **/node_modules/

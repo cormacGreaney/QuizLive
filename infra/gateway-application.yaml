@@ -20,6 +20,30 @@ spring:
           filters:
             - StripPrefix=0
 
+        # QMS in Docker
+        - id: qms_actuator
+          uri: http://qms-service:8082
+          predicates:
+            - Path=/qms/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: qms_service
+          uri: http://qms-service:8082
+          predicates:
+            - Path=/qms/**
+          filters:
+            - StripPrefix=1
+
+        # RTS (WebSocket) in Docker
+        - id: rts_ws
+          uri: ws://rts-service:8083
+          predicates:
+            - Path=/ws/**
+          filters:
+            - StripPrefix=0
+
+
       globalcors:
         corsConfigurations:
           '[/**]':

@@ -35,6 +35,31 @@ spring:
           filters:
             - StripPrefix=0
 
+        # QMS (HTTP REST)
+        - id: qms_actuator
+          uri: http://localhost:8082
+          predicates:
+            - Path=/qms/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: qms_service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/qms/**
+          filters:
+            - StripPrefix=1
+
+        # RTS (WebSocket/STOMP)
+        # Gateway will proxy WebSocket upgrade to RTS
+        - id: rts_ws
+          uri: ws://localhost:8083
+          predicates:
+            - Path=/ws/**
+          filters:
+            - StripPrefix=0
+
+
       globalcors:
         corsConfigurations:
           '[/**]':
