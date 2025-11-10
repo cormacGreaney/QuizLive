@@ -3,6 +3,7 @@ package com.nur.livequiz.qms.domain;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "quizzes")
@@ -23,6 +24,7 @@ public class Quiz {
 
     // Relationship: One quiz has many questions
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Question> questions = new ArrayList<>();
 
     // --- Getters & Setters ---

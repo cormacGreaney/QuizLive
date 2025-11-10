@@ -3,10 +3,11 @@ server:
 
 spring:
   datasource:
-    # Local dev default (works with your current host MySQL)
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/qms_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
-    username: ${DB_USERNAME:user}
-    password: ${DB_PASSWORD:1234}
+    # Inside Docker: host is 'mysql' (service name). Locally you can override SPRING_DATASOURCE_URL.
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/quiz_qms?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+
   jpa:
     hibernate:
       ddl-auto: update
