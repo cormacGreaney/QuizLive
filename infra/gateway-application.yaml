@@ -1,0 +1,34 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        # Put actuator first so it strips /auth properly
+        - id: auth_actuator
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/auth/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: auth_service
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=0
+
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+            allowedMethods: [ "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS" ]
+            allowedHeaders: [ "*" ]
+            allowCredentials: true
+
+      default-filters:
+        - AddResponseHeader=X-Gateway, QuizAPI
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST

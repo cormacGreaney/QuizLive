@@ -11,9 +11,8 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
-# Health-friendly JVM options
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75"
+# Point Spring to the container-only config we created in /config
+ENV SPRING_CONFIG_ADDITIONAL_LOCATION=/config/
 
-# Environment provided via docker-compose env file
-EXPOSE 8081
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+EXPOSE 8080
+ENTRYPOINT ["sh", "-c", "java -jar app.jar"]
