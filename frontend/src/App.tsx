@@ -4,6 +4,8 @@ import Callback from './pages/Callback';
 import Dashboard from './pages/Dashboard';
 import { useAuth } from './auth/AuthProvider';
 import AuthProvider from './auth/AuthProvider';
+import AdminQuizzes from './features/qms/AdminQuizzes';
+
 
 function Protected({ children }: { children: JSX.Element }) {
   const { accessToken } = useAuth();
@@ -19,6 +21,7 @@ export default function App() {
         <Link to="/dashboard">Dashboard</Link>
       </nav>
       <Routes>
+        <Route path="/admin/quizzes" element={<AdminQuizzes />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/oauth2/callback/google" element={<Callback />} />
