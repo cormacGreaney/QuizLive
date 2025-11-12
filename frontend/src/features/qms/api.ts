@@ -28,6 +28,7 @@ export async function createQuiz(input: { title: string; description: string }) 
 export async function addQuestion(params: {
   quizId: number;
   questionText: string;
+  options: string[];
   correctOption: number;
 }) {
   const { quizId, ...body } = params;
