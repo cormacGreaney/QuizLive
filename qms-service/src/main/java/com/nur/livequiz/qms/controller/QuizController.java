@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Public API (no auth) for POC:
@@ -47,6 +48,18 @@ public class QuizController {
         Question question = new Question();
         question.setQuestionText(req.getQuestionText());
         question.setCorrectOption(req.getCorrectOption());
+
+        // Convert options list to JSON string
+        if (req.getOptions() != null && !req.getOptions().isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                String optionsJson = mapper.writeValueAsString(req.getOptions());
+                question.setOptions(optionsJson);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to serialize options", e);
+            }
+        }
+
         question.setQuiz(quiz);
         questionRepository.save(question);
         // Re-fetch with questions loaded
