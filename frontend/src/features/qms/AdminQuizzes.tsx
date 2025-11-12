@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Quiz } from './types';
-import { listQuizzes, createQuiz, addQuestion, startQuiz, endQuiz } from './api';
+import { listQuizzes, createQuiz, addQuestion, startQuiz, endQuiz, deleteQuiz } from './api';
 
 type NewQuizForm = { title: string; description: string };
 type NewQuestionForm = { questionText: string; options: string[]; correctOption: number };
@@ -115,6 +115,22 @@ export default function AdminQuizzes() {
     }
   }
 
+  async function onDelete(quizId: number) {
+    if (!confirm('Are you sure you want to delete this quiz? This cannot be undone.')) {
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      await deleteQuiz(quizId);
+      await refresh();
+    } catch (e: any) {
+      setError(e?.message || 'Failed to delete quiz');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div style={{ maxWidth: 980, margin: '24px auto', padding: 16, fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ marginBottom: 4 }}>Quiz Manager</h1>
@@ -190,6 +206,9 @@ export default function AdminQuizzes() {
                       </button>
                       <button style={btn} onClick={() => onEnd(q.id)} disabled={q.status !== 'LIVE'}>
                         End
+                      </button>
+                      <button style={{ ...btn, borderColor: '#dc2626', color: '#dc2626' }} onClick={() => onDelete(q.id)}>
+                        Delete
                       </button>
                     </div>
                   </td>
