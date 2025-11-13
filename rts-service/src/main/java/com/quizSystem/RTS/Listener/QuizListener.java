@@ -1,5 +1,6 @@
 package com.quizSystem.RTS.Listener;
-import com.quizSystem.RTS.DTO.QuizDTO;
+import com.quizSystem.shared.dto.QuizDTO;
+import com.quizSystem.shared.dto.QuestionDTO;
 import com.quizSystem.RTS.service.RedisTestService;
 import com.quizSystem.RTS.ws.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
