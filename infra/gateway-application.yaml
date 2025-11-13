@@ -35,6 +35,21 @@ spring:
           filters:
             - StripPrefix=1
 
+        # RTS (HTTP actuator + any future REST)
+        - id: rts_actuator
+          uri: http://rts-service:8083
+          predicates:
+            - Path=/rts/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: rts_http
+          uri: http://rts-service:8083
+          predicates:
+            - Path=/rts/**
+          filters:
+            - StripPrefix=1
+
         # RTS (WebSocket) in Docker
         - id: rts_ws
           uri: ws://rts-service:8083
@@ -42,7 +57,6 @@ spring:
             - Path=/ws/**
           filters:
             - StripPrefix=0
-
 
       globalcors:
         corsConfigurations:
@@ -56,3 +70,13 @@ spring:
       default-filters:
         - AddResponseHeader=X-Gateway, QuizAPI
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      access: read-only
