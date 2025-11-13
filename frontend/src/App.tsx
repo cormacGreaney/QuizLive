@@ -5,7 +5,7 @@ import Dashboard from './pages/Dashboard';
 import { useAuth } from './auth/AuthProvider';
 import AuthProvider from './auth/AuthProvider';
 import AdminQuizzes from './features/qms/AdminQuizzes';
-
+import ParticipantPlay from './features/play/ParticipantPlay';
 
 function Protected({ children }: { children: JSX.Element }) {
   const { accessToken } = useAuth();
@@ -27,6 +27,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/oauth2/callback/google" element={<Callback />} />
         <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+        <Route path="/play/:quizId" element={<ParticipantPlay />} />
       </Routes>
     </AuthProvider>
   );
