@@ -131,6 +131,14 @@ export default function AdminQuizzes() {
     }
   }
 
+  function copyLink(quizId: number) {
+  const url = `${window.location.origin}/play/${quizId}`;
+  navigator.clipboard.writeText(url)
+    .then(() => alert(`Link copied:\n${url}`))
+    .catch(() => alert(`Copy failed. Link:\n${url}`));
+}
+
+
   return (
     <div style={{ maxWidth: 980, margin: '24px auto', padding: 16, fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ marginBottom: 4 }}>Quiz Manager</h1>
@@ -210,6 +218,7 @@ export default function AdminQuizzes() {
                       <button style={{ ...btn, borderColor: '#dc2626', color: '#dc2626' }} onClick={() => onDelete(q.id)}>
                         Delete
                       </button>
+                      <button onClick={() => copyLink(q.id)}>Copy Participant Link</button>
                     </div>
                   </td>
                 </tr>

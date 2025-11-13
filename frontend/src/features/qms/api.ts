@@ -53,3 +53,13 @@ export async function endQuiz(quizId: number) {
 export async function deleteQuiz(quizId: number) {
   return http<void>(`${QMS}/quizzes/${quizId}`, { method: 'DELETE' });
 }
+
+export async function getQuizById(id: number) {
+  const res = await fetch(`${API_BASE}/qms/api/quizzes/${id}`);
+  if (!res.ok) throw new Error(`Failed to fetch quiz ${id}`);
+  return res.json();
+}
+
+export const API = {
+  getQuizById,
+};
