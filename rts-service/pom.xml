@@ -42,13 +42,8 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
-    <dependency>
-      <groupId>com.quizSystem</groupId>
-      <artifactId>quiz-shared</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
 
-    <dependency>
+		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
