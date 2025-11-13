@@ -1,5 +1,6 @@
 package com.quizSystem.RTS.service;
 
+import com.quizSystem.RTS.DTO.QuizDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -19,7 +20,10 @@ public class RedisTestService {
     public void addScore(String quizId, String player, double score) {
         redis.opsForZSet().incrementScore(leaderboardKey(quizId), player, score);
     }
-
+  public void saveQuiz(QuizDTO quiz) {
+    String key = "quiz:" + quiz.getId();
+    redisTemplate.opsForValue().set(key, quiz);
+  }
     public Set<ZSetOperations.TypedTuple<Object>> getTopPlayers(String quizId, int topN) {
         return redis.opsForZSet().reverseRangeWithScores(leaderboardKey(quizId), 0, topN - 1);
     }

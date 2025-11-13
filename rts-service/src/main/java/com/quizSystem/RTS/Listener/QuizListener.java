@@ -1,10 +1,9 @@
 package com.quizSystem.RTS.Listener;
 import com.quizSystem.RTS.DTO.QuizDTO;
 import com.quizSystem.RTS.service.RedisTestService;
+import com.quizSystem.RTS.ws.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.socket.server.WebSocketService;
-
 @Component
 public class QuizListener {
 
