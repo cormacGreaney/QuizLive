@@ -1,25 +1,25 @@
 package com.quizSystem.RTS.Controller;
 
 import com.quizSystem.RTS.Listener.QuizListener;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.quizSystem.shared.dto.QuizDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.quizSystem.shared.dto.QuizDTO;
-import com.quizSystem.shared.dto.QuestionDTO;
-
 
 @RestController
 @RequestMapping("/rts/quiz")
+@RequiredArgsConstructor
 public class QuizController {
 
-  @Autowired
-  private QuizListener quizListener;
+  private final QuizListener quizListener;
 
-  // Endpoint for QMS to push quiz updates
+  /**
+   * REST endpoint for QMS to push quiz updates
+   */
   @PostMapping("/update")
   public ResponseEntity<String> updateQuiz(@RequestBody QuizDTO quizDTO) {
-    quizListener.receiveQuizUpdate(quizDTO);
-    return ResponseEntity.ok("Quiz update received");
+    System.out.println("Received quiz update via REST: " + quizDTO.getTitle());
+    quizListener.handleQuizUpdate(quizDTO);
+    return ResponseEntity.ok("Quiz update received and broadcasted.");
   }
 }
-

@@ -1,35 +1,36 @@
 package com.quizSystem.RTS.Listener;
+
 import com.quizSystem.shared.dto.QuizDTO;
-import com.quizSystem.shared.dto.QuestionDTO;
 import com.quizSystem.RTS.service.RedisTestService;
 import com.quizSystem.RTS.ws.WebSocketService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
 @Component
+@RequiredArgsConstructor
 public class QuizListener {
 
-  @Autowired
   private RedisTestService redisService;
-  @Autowired
   private WebSocketService webSocketService;
 
+  /**
+   * Handles a quiz update: saves to Redis and broadcasts via WebSocket
+   */
   public void handleQuizUpdate(QuizDTO quiz){
-    if(quiz==null||quiz.getId()==null){return;}
-     saveQuizToRedis(quiz);
-
-     broadcastQuizUpdate(quiz);
+    if(quiz == null || quiz.getId() == null){
+      System.err.println("Invalid quiz update received - missing ID.");
+      return;
+    }
+    saveQuizToRedis(quiz);
+    broadcastQuizUpdate(quiz);
   }
 
   private void saveQuizToRedis(QuizDTO quiz){
-     redisService.saveQuiz(quiz);
+    redisService.saveQuiz(quiz);
   }
+
   private void broadcastQuizUpdate(QuizDTO quiz){
     String topic = "/topic/quiz/" + quiz.getId();
     webSocketService.broadcast(topic, quiz);
-  }
-  public void receiveQuizUpdate(QuizDTO quiz){
-    System.out.println("Received quiz update: "+quiz.getTitle());
-    handleQuizUpdate(quiz);
-
   }
 }
