@@ -11,7 +11,11 @@ async function http<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
     const text = await res.text().catch(() => '');
     throw new Error(`${res.status} ${res.statusText} :: ${text}`);
   }
-  return (await res.json()) as T;
+  const text = await res.text();
+  if (!text) {
+    return undefined as T;
+  }
+  return JSON.parse(text) as T;
 }
 
 export async function listQuizzes() {
@@ -28,6 +32,7 @@ export async function createQuiz(input: { title: string; description: string }) 
 export async function addQuestion(params: {
   quizId: number;
   questionText: string;
+  options: string[];
   correctOption: number;
 }) {
   const { quizId, ...body } = params;
@@ -43,4 +48,8 @@ export async function startQuiz(quizId: number) {
 
 export async function endQuiz(quizId: number) {
   return http<import('./types').Quiz>(`${QMS}/quizzes/${quizId}/end`, { method: 'POST' });
+}
+
+export async function deleteQuiz(quizId: number) {
+  return http<void>(`${QMS}/quizzes/${quizId}`, { method: 'DELETE' });
 }

@@ -18,7 +18,8 @@ export default function App() {
     <AuthProvider>
       <nav style={{ padding: '8px', borderBottom: '1px solid #ddd', marginBottom: 16 }}>
         <Link to="/" style={{ marginRight: 12 }}>Home</Link>
-        <Link to="/dashboard">Dashboard</Link>
+        <Link to="/dashboard" style={{ marginRight: 12 }}>Dashboard</Link>
+        <Link to="/admin/quizzes" style={{ marginRight: 12 }}>Quiz Manager</Link>
       </nav>
       <Routes>
         <Route path="/admin/quizzes" element={<AdminQuizzes />} />

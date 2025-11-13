@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Quiz } from './types';
-import { listQuizzes, createQuiz, addQuestion, startQuiz, endQuiz } from './api';
+import { listQuizzes, createQuiz, addQuestion, startQuiz, endQuiz, deleteQuiz } from './api';
 
 type NewQuizForm = { title: string; description: string };
-type NewQuestionForm = { questionText: string; correctOption: number };
+type NewQuestionForm = { questionText: string; options: string[]; correctOption: number };
 
 export default function AdminQuizzes() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -14,6 +14,7 @@ export default function AdminQuizzes() {
 
   const [questionForm, setQuestionForm] = useState<NewQuestionForm>({
     questionText: '',
+    options: ['', ''],
     correctOption: 1,
   });
   const [questionForQuizId, setQuestionForQuizId] = useState<number | null>(null);
@@ -65,15 +66,20 @@ export default function AdminQuizzes() {
       setError('Question text is required');
       return;
     }
+    if (questionForm.options.some(opt => !opt.trim())) {
+      setError('All option fields must be filled');
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
       await addQuestion({
         quizId: questionForQuizId,
         questionText: questionForm.questionText,
+        options: questionForm.options,
         correctOption: Number(questionForm.correctOption),
       });
-      setQuestionForm({ questionText: '', correctOption: 1 });
+      setQuestionForm({ questionText: '', options: ['', ''], correctOption: 1 });
       setQuestionForQuizId(null);
       await refresh();
     } catch (e: any) {
@@ -104,6 +110,22 @@ export default function AdminQuizzes() {
       await refresh();
     } catch (e: any) {
       setError(e?.message || 'Failed to end quiz');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onDelete(quizId: number) {
+    if (!confirm('Are you sure you want to delete this quiz? This cannot be undone.')) {
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      await deleteQuiz(quizId);
+      await refresh();
+    } catch (e: any) {
+      setError(e?.message || 'Failed to delete quiz');
     } finally {
       setLoading(false);
     }
@@ -185,6 +207,9 @@ export default function AdminQuizzes() {
                       <button style={btn} onClick={() => onEnd(q.id)} disabled={q.status !== 'LIVE'}>
                         End
                       </button>
+                      <button style={{ ...btn, borderColor: '#dc2626', color: '#dc2626' }} onClick={() => onDelete(q.id)}>
+                        Delete
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -206,16 +231,49 @@ export default function AdminQuizzes() {
               placeholder="e.g. Capital of Ireland?"
             />
           </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ ...label, display: 'block', marginBottom: 8 }}>Options</label>
+            {questionForm.options.map((option, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                <input
+                  style={{ ...input, flex: 1 }}
+                  value={option}
+                  onChange={e => {
+                    const newOptions = [...questionForm.options];
+                    newOptions[idx] = e.target.value;
+                    setQuestionForm(f => ({ ...f, options: newOptions }));
+                  }}
+                  placeholder={`Option ${idx + 1}`}
+                />
+              </div>
+            ))}
+            {questionForm.options.length < 4 && (
+              <button
+                type="button"
+                style={btn}
+                onClick={() => setQuestionForm(f => ({ ...f, options: [...f.options, ''] }))}
+              >
+                + Add Option
+              </button>
+            )}
+          </div>
+
           <div style={row}>
-            <label style={label}>Correct Option (number)</label>
-            <input
+            <label style={label}>Correct Option</label>
+            <select
               style={input}
-              type="number"
-              min={1}
               value={questionForm.correctOption}
               onChange={e => setQuestionForm(f => ({ ...f, correctOption: Number(e.target.value) }))}
-            />
+            >
+              {questionForm.options.map((_, idx) => (
+                <option key={idx} value={idx + 1}>
+                  Option {idx + 1}
+                </option>
+              ))}
+            </select>
           </div>
+
           <div style={{ display: 'flex', gap: 8 }}>
             <button style={primaryBtn} disabled={loading} type="submit">
               {loading ? 'Adding…' : 'Add Question'}
