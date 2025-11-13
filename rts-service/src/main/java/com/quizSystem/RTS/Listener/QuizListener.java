@@ -26,4 +26,9 @@ public class QuizListener {
     String topic = "/topic/quiz/" + quiz.getId();
     webSocketService.broadcast(topic, quiz);
   }
+  public void receiveQuizUpdate(QuizDTO quiz){
+    System.out.println("Received quiz update: "+quiz.getTitle());
+    handleQuizUpdate(quiz);
+
+  }
 }

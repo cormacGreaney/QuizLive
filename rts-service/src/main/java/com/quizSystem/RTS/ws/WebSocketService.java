@@ -22,4 +22,5 @@ public class WebSocketService {
   public void broadcast(String topic, Object payload) {
     messagingTemplate.convertAndSend(topic, payload);
   }
+
 }
