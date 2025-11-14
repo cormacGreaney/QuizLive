@@ -54,6 +54,24 @@ export async function deleteQuiz(quizId: number) {
   return http<void>(`${QMS}/quizzes/${quizId}`, { method: 'DELETE' });
 }
 
+export async function updateQuestion(params: {
+  quizId: number;
+  questionId: number;
+  questionText: string;
+  options: string[];
+  correctOption: number;
+}) {
+  const { quizId, questionId, ...body } = params;
+  return http<import('./types').Quiz>(`${QMS}/quizzes/${quizId}/questions/${questionId}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteQuestion(quizId: number, questionId: number) {
+  return http<void>(`${QMS}/quizzes/${quizId}/questions/${questionId}`, { method: 'DELETE' });
+}
+
 export async function getQuizById(id: number) {
   const res = await fetch(`${API_BASE}/qms/api/quizzes/${id}`);
   if (!res.ok) throw new Error(`Failed to fetch quiz ${id}`);
