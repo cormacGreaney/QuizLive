@@ -89,8 +89,8 @@ services:
 
   rts-service:
     build:
-      context: ../rts-service
-      dockerfile: Dockerfile
+      context: ../    # root of repo
+      dockerfile: rts-service/Dockerfile
     container_name: rts-service
     environment:
       SPRING_DATA_REDIS_HOST: redis
@@ -100,5 +100,6 @@ services:
         condition: service_healthy
     ports:
       - "8083:8083"
+
 
 
