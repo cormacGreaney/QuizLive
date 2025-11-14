@@ -96,4 +96,41 @@ public class QuizController {
     public void delete(@PathVariable Long id) {
         quizRepository.deleteById(id);
     }
+
+    // Update a question
+    @PutMapping("/{quizId}/questions/{questionId}")
+    public Quiz updateQuestion(@PathVariable Long quizId, @PathVariable Long questionId, @RequestBody AddQuestionRequest req) {
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new RuntimeException("Question not found"));
+
+        question.setQuestionText(req.getQuestionText());
+        question.setCorrectOption(req.getCorrectOption());
+
+        // Convert options list to JSON string
+        if (req.getOptions() != null && !req.getOptions().isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                String optionsJson = mapper.writeValueAsString(req.getOptions());
+                question.setOptions(optionsJson);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to serialize options", e);
+            }
+        }
+
+        questionRepository.save(question);
+        // Re-fetch with questions loaded
+        return quizRepository.findByIdWithQuestions(quizId).orElseThrow();
+    }
+
+    // Delete a question
+    @DeleteMapping("/{quizId}/questions/{questionId}")
+    public Quiz deleteQuestion(@PathVariable Long quizId, @PathVariable Long questionId) {
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+        questionRepository.deleteById(questionId);
+        // Re-fetch with questions loaded
+        return quizRepository.findByIdWithQuestions(quizId).orElseThrow();
+    }
 }
