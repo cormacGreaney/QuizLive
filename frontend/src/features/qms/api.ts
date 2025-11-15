@@ -1,32 +1,49 @@
 const API_BASE = import.meta.env.VITE_API_BASE as string; // e.g. http://localhost:8080
 const QMS = `${API_BASE}/qms/api`;
 
+import type { Quiz } from './types';
+
+let tokenProvider: (() => string | null) | null = null;
+export function setTokenProvider(fn: () => string | null) {
+  tokenProvider = fn;
+}
+
+// DEBUG helper (safe): allows to run window.__dbg_getToken() in console
+if (typeof window !== 'undefined') {
+  // @ts-ignore
+  window.__dbg_getToken = () => (tokenProvider ? tokenProvider() : localStorage.getItem('accessToken'));
+}
+
 async function http<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+  // IMPORTANT: fallback ensures Authorization is sent even if provider wasn't wired yet
+  const provided = tokenProvider ? tokenProvider() : null;
+  const token = provided ?? (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
+
   const res = await fetch(input, {
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // safe default for gateway cookies if any
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    credentials: 'include',
     ...init,
   });
+
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`${res.status} ${res.statusText} :: ${text}`);
   }
+
   const text = await res.text();
-  if (!text) {
-    return undefined as T;
-  }
-  return JSON.parse(text) as T;
+  if (!text) return undefined as T;
+  try { return JSON.parse(text) as T; } catch { return text as unknown as T; }
 }
 
 export async function listQuizzes() {
-  return http<import('./types').Quiz[]>(`${QMS}/quizzes`);
+  return http<Quiz[]>(`${QMS}/quizzes`);
 }
 
 export async function createQuiz(input: { title: string; description: string }) {
-  return http<import('./types').Quiz>(`${QMS}/quizzes`, {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+  return http<Quiz>(`${QMS}/quizzes`, { method: 'POST', body: JSON.stringify(input) });
 }
 
 export async function addQuestion(params: {
@@ -36,18 +53,18 @@ export async function addQuestion(params: {
   correctOption: number;
 }) {
   const { quizId, ...body } = params;
-  return http<import('./types').Quiz>(`${QMS}/quizzes/${quizId}/questions`, {
+  return http<Quiz>(`${QMS}/quizzes/${quizId}/questions`, {
     method: 'POST',
     body: JSON.stringify(body),
   });
 }
 
 export async function startQuiz(quizId: number) {
-  return http<import('./types').Quiz>(`${QMS}/quizzes/${quizId}/start`, { method: 'POST' });
+  return http<Quiz>(`${QMS}/quizzes/${quizId}/start`, { method: 'POST' });
 }
 
 export async function endQuiz(quizId: number) {
-  return http<import('./types').Quiz>(`${QMS}/quizzes/${quizId}/end`, { method: 'POST' });
+  return http<Quiz>(`${QMS}/quizzes/${quizId}/end`, { method: 'POST' });
 }
 
 export async function deleteQuiz(quizId: number) {
@@ -62,7 +79,7 @@ export async function updateQuestion(params: {
   correctOption: number;
 }) {
   const { quizId, questionId, ...body } = params;
-  return http<import('./types').Quiz>(`${QMS}/quizzes/${quizId}/questions/${questionId}`, {
+  return http<Quiz>(`${QMS}/quizzes/${quizId}/questions/${questionId}`, {
     method: 'PUT',
     body: JSON.stringify(body),
   });
@@ -73,11 +90,17 @@ export async function deleteQuestion(quizId: number, questionId: number) {
 }
 
 export async function getQuizById(id: number) {
-  const res = await fetch(`${API_BASE}/qms/api/quizzes/${id}`);
-  if (!res.ok) throw new Error(`Failed to fetch quiz ${id}`);
-  return res.json();
+  return http<Quiz>(`${QMS}/quizzes/${id}`);
 }
 
 export const API = {
+  listQuizzes,
+  createQuiz,
+  addQuestion,
+  startQuiz,
+  endQuiz,
+  deleteQuiz,
+  updateQuestion,
+  deleteQuestion,
   getQuizById,
 };
