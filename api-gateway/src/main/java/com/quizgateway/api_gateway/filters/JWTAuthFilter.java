@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 @Component
 public class JWTAuthFilter implements GlobalFilter, Ordered {
@@ -29,28 +30,35 @@ public class JWTAuthFilter implements GlobalFilter, Ordered {
     private final WebClient webClient = WebClient.builder().baseUrl("http://auth-service").build();
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    private static final Pattern PUBLIC_QMS_GET = Pattern.compile("^/qms/api/quizzes/\\d+$");
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         final var request = exchange.getRequest();
         final String path = request.getURI().getPath();
         final var method = request.getMethod();
 
-        // Allow CORS preflight and public endpoints
+        // CORS preflight & public services
         if (HttpMethod.OPTIONS.equals(method)) return chain.filter(exchange);
         if (path.startsWith("/auth/") || path.startsWith("/actuator/")) return chain.filter(exchange);
 
-        // Only protect QMS (adjust if you want more paths protected)
+        // Only protect /qms/**
         if (!path.startsWith("/qms/")) return chain.filter(exchange);
 
+        // Allow anonymous GET for the participant endpoint
+        if (HttpMethod.GET.equals(method) && PUBLIC_QMS_GET.matcher(path).matches()) {
+            return chain.filter(exchange);
+        }
+
+        // From here on, /qms/** requires a bearer token
         final String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.warn("QMS request without bearer: {} {}", method, path);
+            log.warn("QMS protected request without bearer: {} {}", method, path);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
         final String token = authHeader.substring("Bearer ".length());
 
-        // 1) Try auth-service /auth/verify
         return webClient.post()
                 .uri("/auth/verify")
                 .header(HttpHeaders.AUTHORIZATION, authHeader)
@@ -61,24 +69,21 @@ public class JWTAuthFilter implements GlobalFilter, Ordered {
                 .flatMap(body -> {
                     final String uid = extractUidFromVerify(body);
                     if (uid != null) {
-                        return proceedWithUid(uid, body.get("email"), body.get("role"), exchange, chain, path);
+                        return proceedWithUid(uid, body.get("email"), body.get("role"), exchange, chain);
                     }
-                    // If verify responded but didn’t give uid, fallback to local decode
                     final String decodedUid = decodeUidFromJwt(token);
                     if (decodedUid != null) {
-                        log.info("Verify missing uid; falling back to JWT decode, uid={}", decodedUid);
-                        return proceedWithUid(decodedUid, null, "USER", exchange, chain, path);
+                        log.info("Verify missing uid; fallback decode uid={}", decodedUid);
+                        return proceedWithUid(decodedUid, null, "USER", exchange, chain);
                     }
-                    log.warn("Verify succeeded but no uid; rejecting {}", path);
                     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                     return exchange.getResponse().setComplete();
                 })
                 .onErrorResume(ex -> {
-                    // 2) If verify call fails, fallback to decoding the JWT to get uid/sub
                     final String decodedUid = decodeUidFromJwt(token);
                     if (decodedUid != null) {
-                        log.info("Verify error ({}); fallback accepted, uid={}", ex.getClass().getSimpleName(), decodedUid);
-                        return proceedWithUid(decodedUid, null, "USER", exchange, chain, path);
+                        log.info("Verify error {}; fallback decode uid={}", ex.getClass().getSimpleName(), decodedUid);
+                        return proceedWithUid(decodedUid, null, "USER", exchange, chain);
                     }
                     log.error("Verify error and decode failed for {} {}: {}", method, path, ex.toString());
                     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
@@ -87,23 +92,22 @@ public class JWTAuthFilter implements GlobalFilter, Ordered {
     }
 
     private Mono<Void> proceedWithUid(String uid, Object emailObj, Object roleObj,
-                                      ServerWebExchange exchange, GatewayFilterChain chain, String path) {
+                                      ServerWebExchange exchange, GatewayFilterChain chain) {
         final String email = emailObj != null ? String.valueOf(emailObj) : null;
         final String role = String.valueOf(Objects.requireNonNullElse(roleObj, "USER"));
 
-        final ServerHttpRequest mutatedReq = exchange.getRequest().mutate()
+        ServerHttpRequest mutatedReq = exchange.getRequest().mutate()
                 .headers(h -> {
                     h.add("X-User-Id", uid);
                     if (email != null) h.add("X-User-Email", email);
                     h.add("X-User-Role", role);
                 })
                 .build();
-        final ServerWebExchange mutatedEx = exchange.mutate().request(mutatedReq).build();
+        ServerWebExchange mutatedEx = exchange.mutate().request(mutatedReq).build();
         return chain.filter(mutatedEx);
     }
 
     private String extractUidFromVerify(Map<?, ?> body) {
-        // Accept common keys: uid | subject | sub
         Object uid = body.get("uid");
         if (uid == null) uid = body.get("subject");
         if (uid == null) uid = body.get("sub");
@@ -115,8 +119,8 @@ public class JWTAuthFilter implements GlobalFilter, Ordered {
             String[] parts = token.split("\\.");
             if (parts.length < 2) return null;
             byte[] decoded = Base64.getUrlDecoder().decode(parts[1]);
-            String json = new String(decoded, StandardCharsets.UTF_8);
-            Map<String, Object> claims = MAPPER.readValue(json, new TypeReference<>() {});
+            Map<String, Object> claims = MAPPER.readValue(new String(decoded, StandardCharsets.UTF_8),
+                    new TypeReference<>() {});
             Object uid = claims.get("uid");
             if (uid == null) uid = claims.get("sub");
             return uid != null ? String.valueOf(uid) : null;
