@@ -1,10 +1,11 @@
 package com.nur.livequiz.qms.mapper;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nur.livequiz.qms.domain.Quiz;
 import com.nur.livequiz.qms.domain.Question;
 import com.quizSystem.shared.dto.QuizDTO;
 import com.quizSystem.shared.dto.QuestionDTO;
-
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,11 +27,11 @@ public class QuizMapper {
     QuestionDTO dto = new QuestionDTO();
     dto.setId(question.getId());
     dto.setQuestionText(question.getQuestionText());
-    // parse JSON string options if needed
-    dto.setOptions(question.getOptions() != null ?
-      List.of(question.getOptions().split(",")) : List.of()
-    );
+
+    dto.setOptions(question.getOptions() != null ? question.getOptions() : List.of());
     dto.setCorrectOption(question.getCorrectOption());
+    dto.setQuizId(question.getQuiz().getId());
     return dto;
   }
+
 }

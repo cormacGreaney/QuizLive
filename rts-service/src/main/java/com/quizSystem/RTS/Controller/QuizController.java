@@ -1,6 +1,7 @@
 package com.quizSystem.RTS.Controller;
 
 import com.quizSystem.RTS.Listener.QuizListener;
+import com.quizSystem.shared.dto.QuestionDTO;
 import com.quizSystem.shared.dto.QuizDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,5 +22,12 @@ public class QuizController {
     System.out.println("Received quiz update via REST: " + quizDTO.getTitle());
     quizListener.handleQuizUpdate(quizDTO);
     return ResponseEntity.ok("Quiz update received and broadcasted.");
+  }
+
+  @PostMapping("/question-added")
+  public ResponseEntity<String> questionAdded(@RequestBody QuestionDTO questionDTO) {
+    System.out.println("Received question update via REST: " + questionDTO.getQuestionText());
+    quizListener.handleQuestionUpdate(questionDTO);
+    return ResponseEntity.ok("Question update received and broadcasted.");
   }
 }
