@@ -58,7 +58,7 @@ export default function Callback() {
         setProfile(resp.profile ?? null);
 
         // Go to the manager (or wherever)
-        nav('/admin/quizzes', { replace: true });
+        nav('/dashboard', { replace: true });
       } catch (e: any) {
         console.error('Auth exchange error:', e);
         setErr(e?.message || 'Login failed');
