@@ -1,8 +1,8 @@
 package com.nur.livequiz.qms.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -12,30 +12,32 @@ public class Question {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 2000)
+    @Column(nullable = false, length = 1024)
     private String questionText;
 
-    @Column(columnDefinition = "JSON")
-    private String options; // JSON array of option strings
+    
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "question_options", joinColumns = @JoinColumn(name = "question_id"))
+    @Column(name = "option_text", length = 512)
+    private List<String> options = new ArrayList<>();
 
+    @Column(nullable = false)
     private Integer correctOption;
 
-    // Many questions belong to one quiz
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quiz_id")
+    @JoinColumn(name = "quiz_id", nullable = false)
     @JsonBackReference
     private Quiz quiz;
 
-    // Getters & Setters
     public Long getId() { return id; }
     public String getQuestionText() { return questionText; }
-    public String getOptions() { return options; }
+    public List<String> getOptions() { return options; }
     public Integer getCorrectOption() { return correctOption; }
     public Quiz getQuiz() { return quiz; }
 
     public void setId(Long id) { this.id = id; }
     public void setQuestionText(String questionText) { this.questionText = questionText; }
-    public void setOptions(String options) { this.options = options; }
+    public void setOptions(List<String> options) { this.options = options; }
     public void setCorrectOption(Integer correctOption) { this.correctOption = correctOption; }
     public void setQuiz(Quiz quiz) { this.quiz = quiz; }
 }

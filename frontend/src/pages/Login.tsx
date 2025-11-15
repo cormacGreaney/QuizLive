@@ -2,14 +2,14 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 
 export default function Login() {
   const handleGoogle = () => {
-    const redirectUri = `${window.location.origin}/oauth2/callback/google/`;
+    const redirectUri = `${window.location.origin}/oauth2/callback/google`;
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
       redirect_uri: redirectUri,
       response_type: 'code',
       scope: 'openid email profile',
       prompt: 'consent',
-      access_type: 'online'
+      access_type: 'online',
     });
     const url = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
     window.location.href = url;
@@ -23,9 +23,9 @@ export default function Login() {
         Continue with Google
       </button>
       <p style={{ marginTop: 16, fontSize: 12, color: '#666' }}>
-        Redirect URI must be allowed in Google Console and in your Auth service:
-        <br/>
-        <code>{`${window.location.origin}/oauth2/callback/google/`}</code>
+        Redirect URI:
+        <br />
+        <code>{`${window.location.origin}/oauth2/callback/google`}</code>
       </p>
     </div>
   );

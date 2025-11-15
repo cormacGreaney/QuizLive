@@ -22,7 +22,7 @@ export default function App() {
         <Link to="/admin/quizzes" style={{ marginRight: 12 }}>Quiz Manager</Link>
       </nav>
       <Routes>
-        <Route path="/admin/quizzes" element={<AdminQuizzes />} />
+        <Route path="/admin/quizzes" element={<Protected><AdminQuizzes /></Protected>} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/oauth2/callback/google" element={<Callback />} />
