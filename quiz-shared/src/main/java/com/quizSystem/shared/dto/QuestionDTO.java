@@ -1,15 +1,20 @@
 package com.quizSystem.shared.dto;
 
+import java.util.List;
+
 public class QuestionDTO {
   private Long id;
-  private String text;
-  private String type;
+  private String questionText;
+  private List<String> options; // not JSON string
+  private Integer correctOption; // optional to hide later
 
-  // Getters and setters
   public Long getId() { return id; }
+  public String getQuestionText() { return questionText; }
+  public List<String> getOptions() { return options; }
+  public Integer getCorrectOption() { return correctOption; }
+
   public void setId(Long id) { this.id = id; }
-  public String getText() { return text; }
-  public void setText(String text) { this.text = text; }
-  public String getType() { return type; }
-  public void setType(String type) { this.type = type; }
+  public void setQuestionText(String questionText) { this.questionText = questionText; }
+  public void setOptions(List<String> options) { this.options = options; }
+  public void setCorrectOption(Integer correctOption) { this.correctOption = correctOption; }
 }
