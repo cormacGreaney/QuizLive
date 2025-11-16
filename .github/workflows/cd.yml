@@ -52,7 +52,8 @@ jobs:
       - name: Build & push qms-service
         uses: docker/build-push-action@v6
         with:
-          context: ./qms-service
+          context: .
+          file: ./qms-service/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-qms-service:sha-${{ steps.vars.outputs.SHORT }}
@@ -62,7 +63,8 @@ jobs:
       - name: Build & push rts-service
         uses: docker/build-push-action@v6
         with:
-          context: ./rts-service
+          context: .
+          file: ./rts-service/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-rts-service:sha-${{ steps.vars.outputs.SHORT }}
