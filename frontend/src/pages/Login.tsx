@@ -2,7 +2,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 
 export default function Login() {
   const handleGoogle = () => {
-    const redirectUri = ${window.location.origin}/oauth2/callback/google;
+    const redirectUri = '${window.location.origin}/oauth2/callback/google';
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
       redirect_uri: redirectUri,
@@ -11,7 +11,7 @@ export default function Login() {
       prompt: 'consent',
       access_type: 'online',
     });
-    const url = https://accounts.google.com/o/oauth2/v2/auth?${params.toString()};
+    const url = 'https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}';
     window.location.href = url;
   };
 
@@ -25,7 +25,7 @@ export default function Login() {
       <p style={{ marginTop: 16, fontSize: 12, color: '#666' }}>
         Redirect URI:
         <br />
-        <code>{${window.location.origin}/oauth2/callback/google}</code>
+        <code>{'${window.location.origin}/oauth2/callback/google'}</code>
       </p>
     </div>
   );
