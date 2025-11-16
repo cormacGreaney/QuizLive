@@ -1,6 +1,7 @@
 package com.quizSystem.RTS.Listener;
 
 import com.quizSystem.shared.dto.QuizDTO;
+import com.quizSystem.shared.dto.QuestionDTO;
 import com.quizSystem.RTS.service.RedisTestService;
 import com.quizSystem.RTS.ws.WebSocketService;
 import lombok.RequiredArgsConstructor;
@@ -10,8 +11,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class QuizListener {
 
-  private RedisTestService redisService;
-  private WebSocketService webSocketService;
+  private final RedisTestService redisService;
+  private final WebSocketService webSocketService;
 
   /**
    * Handles a quiz update: saves to Redis and broadcasts via WebSocket
@@ -33,4 +34,6 @@ public class QuizListener {
     String topic = "/topic/quiz/" + quiz.getId();
     webSocketService.broadcast(topic, quiz);
   }
+
+
 }

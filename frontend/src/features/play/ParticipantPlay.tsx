@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { API } from '../qms/api';
+import Leaderboard from './Leaderboard';
 
 type QuizStatus = 'DRAFT' | 'LIVE' | 'ENDED';
 
@@ -72,6 +73,8 @@ export default function ParticipantPlay() {
   const [index, setIndex] = useState(0);
   const current = useMemo(() => (quiz?.questions ?? [])[index], [quiz, index]);
 
+  const answerApiRef = useRef<{ answer: (questionId: number, selectedOption: number) => void } | null>(null);
+
   async function fetchQuiz() {
     try {
       setError(null);
@@ -107,13 +110,24 @@ export default function ParticipantPlay() {
   }
 
   function handleAnswer(optionIndex: number) {
-    if (!quiz) return;
+    //if (!quiz) return;
+    if(!quiz || !current) return;
+
+    //send rts
+
+      answerApiRef.current?.answer(current.id, optionIndex+1);
+
+
     if (index + 1 < quiz.questions.length) {
       setIndex(index + 1);
     } else {
       alert('Thanks! You’ve finished this quiz.');
     }
   }
+
+  const onReady = useCallback((api: { answer: (questionId: number, selectedOption: number) => void }) => {
+    answerApiRef.current = api;
+  }, []);
 
   if (loading) return <div style={{ padding: 16 }}>Loading…</div>;
   if (error)   return <div style={{ padding: 16, color: 'crimson' }}>Error: {error}</div>;
@@ -189,6 +203,19 @@ export default function ParticipantPlay() {
           This quiz has ended. Thanks for playing!
         </div>
       )}
-    </div>
+
+
+
+      {acceptedName && quiz.status === 'LIVE' && (
+        <Leaderboard
+          quizId={quiz.id}
+          nickname={acceptedName}
+          onReady={onReady}
+
+      />
+        )}
+
+
+        </div>
   );
 }

@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     # Inside Docker: host is 'mysql' (service name). Locally you can override SPRING_DATASOURCE_URL.
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/quiz_qms?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/quiz_qms?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:password}
 
@@ -22,3 +22,8 @@ management:
     web:
       exposure:
         include: health,info
+
+# RTS Service URL for notifications
+rts:
+  base-url:${RTS_BASE_URL:http://localhost:8083}
+
