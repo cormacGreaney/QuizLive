@@ -44,6 +44,57 @@ export default function Callback() {
     })();
   }, [loc.search, nav, setTokens, setProfile]);
 
-  if (err) return <div style={{ padding: 24, color: 'crimson' }}>Login error: {err}</div>;
-  return <div style={{ padding: 24 }}>Finishing sign-in…</div>;
+  return (
+    <div style={{
+      maxWidth: 480,
+      margin: '80px auto',
+      padding: '2rem',
+      borderRadius: '16px',
+      background: 'linear-gradient(to right, #fdfbfb, #ebedee)',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+      fontFamily: 'Segoe UI, sans-serif',
+      textAlign: 'center',
+      color: '#333'
+    }}>
+      {err ? (
+        <>
+          <h2 style={{
+            fontSize: '1.75rem',
+            marginBottom: '1rem',
+            color: '#e74c3c'
+          }}>
+            Login Error
+          </h2>
+          <p style={{
+            fontSize: '1rem',
+            color: '#c0392b',
+            backgroundColor: '#ffe6e6',
+            padding: '1rem',
+            borderRadius: '8px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
+          }}>
+            {err}
+          </p>
+        </>
+      ) : (
+        <>
+          <h2 style={{
+            fontSize: '1.75rem',
+            marginBottom: '1rem',
+            background: 'linear-gradient(to right, #00c6ff, #0072ff)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            Finishing Sign-In…
+          </h2>
+          <p style={{
+            fontSize: '1rem',
+            color: '#555'
+          }}>
+            Please wait ... We're verifying your account and getting things ready.
+          </p>
+        </>
+      )}
+    </div>
+  );
 }
