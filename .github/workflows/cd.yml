@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write   
+      packages: write
 
     steps:
       - name: Checkout
@@ -29,6 +29,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Normalize owner to lowercase
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Compute tags
         id: vars
         run: |
@@ -42,8 +45,8 @@ jobs:
           context: ./auth-service
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/quizlive-auth-service:sha-${{ steps.vars.outputs.SHORT }}
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/quizlive-auth-service:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-auth-service:sha-${{ steps.vars.outputs.SHORT }}
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-auth-service:latest
 
       # qms-service
       - name: Build & push qms-service
@@ -52,8 +55,8 @@ jobs:
           context: ./qms-service
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/quizlive-qms-service:sha-${{ steps.vars.outputs.SHORT }}
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/quizlive-qms-service:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-qms-service:sha-${{ steps.vars.outputs.SHORT }}
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-qms-service:latest
 
       # rts-service
       - name: Build & push rts-service
@@ -62,8 +65,8 @@ jobs:
           context: ./rts-service
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/quizlive-rts-service:sha-${{ steps.vars.outputs.SHORT }}
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/quizlive-rts-service:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-rts-service:sha-${{ steps.vars.outputs.SHORT }}
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-rts-service:latest
 
       # api-gateway
       - name: Build & push api-gateway
@@ -72,8 +75,8 @@ jobs:
           context: ./api-gateway
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/quizlive-api-gateway:sha-${{ steps.vars.outputs.SHORT }}
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/quizlive-api-gateway:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-api-gateway:sha-${{ steps.vars.outputs.SHORT }}
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-api-gateway:latest
 
       # frontend
       - name: Build & push frontend
@@ -82,5 +85,5 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/quizlive-frontend:sha-${{ steps.vars.outputs.SHORT }}
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/quizlive-frontend:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-frontend:sha-${{ steps.vars.outputs.SHORT }}
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/quizlive-frontend:latest
