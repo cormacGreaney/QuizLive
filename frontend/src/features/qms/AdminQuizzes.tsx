@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Quiz } from './types';
 import { listQuizzes, createQuiz, addQuestion, startQuiz, endQuiz, deleteQuiz, deleteQuestion, updateQuestion } from './api';
+import QRModal from '../../components/QrModal';
 
 type NewQuizForm = { title: string; description: string };
 type NewQuestionForm = { questionText: string; options: string[]; correctOption: number };
@@ -20,6 +21,9 @@ export default function AdminQuizzes() {
   const [questionForQuizId, setQuestionForQuizId] = useState<number | null>(null);
   const [expandedQuizId, setExpandedQuizId] = useState<number | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<{ quizId: number; questionId: number; form: NewQuestionForm } | null>(null);
+
+  // --- QR modal state (single instance rendered outside the table) ---
+  const [qrForQuizId, setQrForQuizId] = useState<number | null>(null);
 
   const totalDraft = useMemo(() => quizzes.filter(q => q.status === 'DRAFT').length, [quizzes]);
   const totalLive = useMemo(() => quizzes.filter(q => q.status === 'LIVE').length, [quizzes]);
@@ -202,12 +206,11 @@ export default function AdminQuizzes() {
   }
 
   function copyLink(quizId: number) {
-  const url = `${window.location.origin}/play/${quizId}`;
-  navigator.clipboard.writeText(url)
-    .then(() => alert(`Link copied:\n${url}`))
-    .catch(() => alert(`Copy failed. Link:\n${url}`));
-}
-
+    const url = `${window.location.origin}/play/${quizId}`;
+    navigator.clipboard.writeText(url)
+      .then(() => alert(`Link copied:\n${url}`))
+      .catch(() => alert(`Copy failed. Link:\n${url}`));
+  }
 
   return (
     <div style={{ maxWidth: 980, margin: '24px auto', padding: 16, fontFamily: 'system-ui, sans-serif' }}>
@@ -292,7 +295,9 @@ export default function AdminQuizzes() {
                         <button style={{ ...btn, borderColor: '#dc2626', color: '#dc2626' }} onClick={() => onDelete(q.id)}>
                           Delete
                         </button>
-                        <button onClick={() => copyLink(q.id)}>Copy Participant Link</button>
+                        <button style={btn} onClick={() => copyLink(q.id)}>Copy Participant Link</button>
+                        {/* Open the single, page-level modal (rendered outside the table) */}
+                        <button style={btn} onClick={() => setQrForQuizId(q.id)}>Show QR</button>
                       </div>
                     </td>
                   </tr>
@@ -483,6 +488,14 @@ export default function AdminQuizzes() {
           </div>
         </form>
       )}
+
+      {/* === Single QR modal rendered outside the table via portal === */}
+      <QRModal
+        open={qrForQuizId !== null}
+        onClose={() => setQrForQuizId(null)}
+        url={qrForQuizId ? `${window.location.origin}/play/${qrForQuizId}` : ''}
+        title="Scan to join"
+      />
     </div>
   );
 }
