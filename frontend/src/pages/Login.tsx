@@ -16,16 +16,48 @@ export default function Login() {
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: '80px auto', padding: 16, border: '1px solid #eee', borderRadius: 8 }}>
-      <h1>Live Quiz</h1>
-      <p>Sign in to continue.</p>
-      <button onClick={handleGoogle} style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid #999', cursor: 'pointer' }}>
+    <div style={{
+      maxWidth: 420,
+      margin: '80px auto',
+      padding: '2rem',
+      borderRadius: 12,
+      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+      background: 'white',
+      fontFamily: 'Segoe UI, sans-serif',
+      textAlign: 'center'
+    }}>
+      <h1 style={{
+        fontSize: '2rem',
+        marginBottom: '0.5rem',
+        background: 'linear-gradient(to right, #00c6ff, #0072ff)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent'
+      }}>
+        Live Quiz
+      </h1>
+      <p style={{ marginBottom: '1.5rem', color: '#555' }}>
+        Sign in to continue
+      </p>
+      <button
+        onClick={handleGoogle}
+        style={{
+          padding: '12px 18px',
+          borderRadius: 8,
+          border: 'none',
+          background: '#4285F4',
+          color: 'white',
+          fontWeight: 500,
+          fontSize: 14,
+          cursor: 'pointer',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}
+      >
         Continue with Google
       </button>
-      <p style={{ marginTop: 16, fontSize: 12, color: '#666' }}>
-        Redirect URI:
+      <p style={{ marginTop: 24, fontSize: 13, color: '#555' }}>
+        You only need to log in if you want to <strong>create or host quizzes</strong>.
         <br />
-        <code>{`${window.location.origin}/oauth2/callback/google`}</code>
+        To <strong>join a quiz</strong>, ask the host for a participant link — no login required.
       </p>
     </div>
   );
