@@ -34,21 +34,25 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
-      - name: Build qms-service
+      - name: Build qms-service (CI)
         uses: docker/build-push-action@v6
         with:
-          context: ./qms-service
-          push: false
+          context: .
+          file: qms-service/Dockerfile
           tags: local/qms-service:ci
+          load: false
+          push: false
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
-      - name: Build rts-service
+      - name: Build rts-service (CI)
         uses: docker/build-push-action@v6
         with:
-          context: ./rts-service
-          push: false
+          context: .
+          file: rts-service/Dockerfile
           tags: local/rts-service:ci
+          load: false
+          push: false
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
