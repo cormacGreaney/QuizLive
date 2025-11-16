@@ -126,69 +126,137 @@ export default function ParticipantPlay() {
   }
 
   return (
-    <div style={{ maxWidth: 720, margin: '24px auto', padding: 16 }}>
-      <h1 style={{ marginBottom: 4 }}>{quiz.title}</h1>
-      <div style={{ color: '#666', marginBottom: 16 }}>{quiz.description}</div>
+  <div style={{
+    maxWidth: 720,
+    margin: '40px auto',
+    padding: '2rem',
+    fontFamily: 'Segoe UI, sans-serif',
+    background: 'white',
+    borderRadius: 12,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.08)'
+  }}>
+    <h1 style={{
+      fontSize: '1.8rem',
+      marginBottom: 8,
+      background: 'linear-gradient(to right, #00c6ff, #0072ff)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent'
+    }}>
+      {quiz.title}
+    </h1>
+    <p style={{ color: '#555', marginBottom: 24 }}>{quiz.description}</p>
 
-      {/* join gate */}
-      {!acceptedName && (
-        <div style={{ marginBottom: 24 }}>
-          <label>
-            Enter a nickname:&nbsp;
-            <input
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="e.g., Cormac"
-            />
-          </label>
-          <button onClick={handleJoin} style={{ marginLeft: 8 }}>Join</button>
+    {!acceptedName && (
+      <div style={{ marginBottom: 32 }}>
+        <label style={{ fontSize: 14, color: '#333' }}>
+          Enter a nickname:
+          <input
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="e.g., Cormac"
+            style={{
+              marginLeft: 8,
+              padding: '8px 12px',
+              borderRadius: 8,
+              border: '1px solid #ccc',
+              fontSize: 14
+            }}
+          />
+        </label>
+        <button
+          onClick={handleJoin}
+          style={{
+            marginLeft: 12,
+            padding: '8px 14px',
+            borderRadius: 8,
+            border: 'none',
+            background: '#111827',
+            color: 'white',
+            fontWeight: 500,
+            cursor: 'pointer'
+          }}
+        >
+          Join
+        </button>
+      </div>
+    )}
+
+    {quiz.status === 'DRAFT' && (
+      <div style={{
+        padding: 16,
+        background: '#fff8e1',
+        border: '1px solid #ffe082',
+        borderRadius: 8,
+        color: '#7c6f00'
+      }}>
+        Waiting for the host to start… (auto-refreshing)
+      </div>
+    )}
+
+    {quiz.status === 'LIVE' && acceptedName && current && (
+      <div>
+        <div style={{ marginBottom: 12, fontSize: 14, color: '#666' }}>
+          Playing as <strong>{acceptedName}</strong>
         </div>
-      )}
+        <h2 style={{ marginBottom: 12 }}>
+          Question {index + 1} of {quiz.questions.length}
+        </h2>
+        <p style={{ fontSize: 18, marginBottom: 16 }}>{current.questionText}</p>
 
-      {/* quiz state */}
-      {quiz.status === 'DRAFT' && (
-        <div style={{ padding: 12, background: '#fff8e1', border: '1px solid #ffe082' }}>
-          Waiting for the host to start… (auto-refreshing)
-        </div>
-      )}
-
-      {quiz.status === 'LIVE' && acceptedName && current && (
-        <div>
-          <div style={{ marginBottom: 12, fontSize: 14, color: '#666' }}>
-            Playing as <strong>{acceptedName}</strong>
-          </div>
-          <h2 style={{ marginBottom: 12 }}>
-            Question {index + 1} of {quiz.questions.length}
-          </h2>
-          <p style={{ fontSize: 18, marginBottom: 12 }}>{current.questionText}</p>
-
-          {(() => {
-            const optionList = normalizeOptions(current.options);
-            if (optionList.length === 0) {
-              return (
-                <div style={{ padding: 12, background: '#fff8e1', border: '1px solid #ffe082' }}>
-                  No answer options available for this question yet.
-                </div>
-              );
-            }
+        {(() => {
+          const optionList = normalizeOptions(current.options);
+          if (optionList.length === 0) {
             return (
-              <div style={{ display: 'grid', gap: 8 }}>
-                {optionList.map((opt, i) => (
-                  <button key={i} onClick={() => handleAnswer(i)} style={{ textAlign: 'left' }}>
-                    {opt}
-                  </button>
-                ))}
+              <div style={{
+                padding: 16,
+                background: '#fff8e1',
+                border: '1px solid #ffe082',
+                borderRadius: 8,
+                color: '#7c6f00'
+              }}>
+                No answer options available for this question yet.
               </div>
             );
-          })()}
-        </div>
-      )}
+          }
+          return (
+            <div style={{ display: 'grid', gap: 12 }}>
+              {optionList.map((opt, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleAnswer(i)}
+                  style={{
+                    padding: '12px 16px',
+                    borderRadius: 8,
+                    border: '1px solid #d1d5db',
+                    background: '#f9fafb',
+                    textAlign: 'left',
+                    fontSize: 15,
+                    cursor: 'pointer',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.background = '#f3f4f6')}
+                  onMouseOut={(e) => (e.currentTarget.style.background = '#f9fafb')}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
+      </div>
+    )}
 
-      {quiz.status === 'ENDED' && (
-        <div style={{ padding: 12, background: '#e8f5e9', border: '1px solid #c8e6c9' }}>
-          This quiz has ended. Thanks for playing!
-        </div>
-      )}
-    </div>
-  );
+    {quiz.status === 'ENDED' && (
+      <div style={{
+        padding: 16,
+        background: '#e8f5e9',
+        border: '1px solid #c8e6c9',
+        borderRadius: 8,
+        color: '#256029'
+      }}>
+        This quiz has ended. Thanks for playing!
+      </div>
+    )}
+  </div>
+);
 }
