@@ -9,10 +9,10 @@ Services:
 
 ## Dev quick start
 1. Clone repo
-1. Open **Docker Desktop** (keep it running).
-2. PowerShell:
+2. Open **Docker Desktop** (keep it running).
+3. PowerShell:
    cd to .\infra
    Copy-Item .env.example .env
-   # Edit .env and fill JWT_SECRET + Google creds
+   Edit .env and fill JWT_SECRET + Google creds
    docker compose up --build
-3. If front end errors on start up cd to frontend folder in powershell and run npm install to regen you package-lock.json
+4. If front end errors on start up cd to frontend folder in powershell and run npm install to regen you package-lock.json
