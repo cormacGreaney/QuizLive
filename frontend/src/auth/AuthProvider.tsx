@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { setTokenProvider } from '../features/qms/api';
 
 type Profile = {
   id: number;
@@ -48,7 +49,15 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     if (profile) localStorage.setItem('profile', JSON.stringify(profile));
   }, [profile]);
 
-  const value = useMemo(() => ({ accessToken, refreshToken, profile, setTokens, setProfile, logout }), [accessToken, refreshToken, profile]);
+  
+  useEffect(() => {
+    setTokenProvider(() => accessToken);
+  }, [accessToken]);
+
+  const value = useMemo(
+    () => ({ accessToken, refreshToken, profile, setTokens, setProfile, logout }),
+    [accessToken, refreshToken, profile]
+  );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

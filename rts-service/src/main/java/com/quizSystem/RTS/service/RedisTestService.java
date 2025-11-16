@@ -23,7 +23,12 @@ public class RedisTestService {
     String key = "quiz:" + quiz.getId();
     redis.opsForValue().set(key, quiz);
   }
-    public Set<ZSetOperations.TypedTuple<Object>> getTopPlayers(String quizId, int topN) {
+  public void saveQuestion(QuestionDTO question){
+    String key = "question:" + question.getId();
+    redis.opsForValue().set(key, question);
+  }
+
+  public Set<ZSetOperations.TypedTuple<Object>> getTopPlayers(String quizId, int topN) {
         return redis.opsForZSet().reverseRangeWithScores(leaderboardKey(quizId), 0, topN - 1);
     }
 }
