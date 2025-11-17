@@ -62,20 +62,22 @@ services:
       - "5173:80"
 
   qms-service:
-    container_name: qms-service   # <-- must be here, not under build
+    container_name: qms-service
     build:
-      context: ../    # root of QuizLive repo
+      context: ../
       dockerfile: qms-service/Dockerfile
     environment:
       SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/qms_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      RTS_BASE_URL: "http://rts-service:8083"   # QMS -> RTS inside Docker
     depends_on:
       mysql:
         condition: service_healthy
+      rts-service:
+        condition: service_started
     ports:
       - "8082:8082"
-
 
   redis:
     image: redis:7-alpine
@@ -90,17 +92,17 @@ services:
 
   rts-service:
     build:
-      context: ../    # root of repo
+      context: ../
       dockerfile: rts-service/Dockerfile
     container_name: rts-service
     environment:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      GATEWAY_BASE_URL: "http://api-gateway:8080"  # RTS -> Gateway inside Docker
     depends_on:
       redis:
         condition: service_healthy
+      api-gateway:
+        condition: service_started
     ports:
       - "8083:8083"
-
-
-

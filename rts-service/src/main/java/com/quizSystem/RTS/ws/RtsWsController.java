@@ -1,63 +1,206 @@
 package com.quizSystem.RTS.ws;
 
 import com.quizSystem.RTS.service.RedisTestService;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import com.quizSystem.shared.dto.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+
 @Controller
-@RequiredArgsConstructor
 public class RtsWsController {
 
-    private final RedisTestService redisTestService;
+  @Autowired
+  private SimpMessagingTemplate messagingTemplate;
 
-    // Client sends to: /app/answer
-    // All clients subscribe to: /topic/leaderboard
-    //will be changing all of this when integrating with other services
+  @Autowired
+  private RedisTestService redisService;
 
-    @MessageMapping("answer")
-    @SendTo("/topic/leaderboard")
-    public OutMsg submitAnswer(InMsg msg) {
-        String quizId = "quiz1";
-        String player = msg.getText();   // using "text" as player name
+  private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        int points = (int) (Math.random() * 90) + 10;  // random now just for testing functionality
-        redisTestService.addScore(quizId, player, points);
+  // HEARTBEAT
+  @Scheduled(fixedRate = 1000)
+  public void sendHeartbeat() {
+    String heartbeat = "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): "
+        + LocalDateTime.now(ZoneOffset.UTC).format(formatter);
+    messagingTemplate.convertAndSend("/topic/heartbeat", heartbeat);
+  }
 
-        var top = redisTestService.getTopPlayers(quizId, 5);
+  // PARTICIPANT ANSWER
+  @MessageMapping("/quiz/{quizId}/answer")
+  public void handleAnswer(@DestinationVariable Long quizId,
+                           @Payload AnswerDTO answer,
+                           SimpMessageHeaderAccessor headerAccessor) {
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("🏆 Leaderboard Update 🏆\n");
-        sb.append(player).append(" gained ").append(points).append(" points!\n\n");
-
-        int rank = 1;
-        for (var entry : top) {
-            sb.append(rank++)
-                    .append(". ")
-                    .append(entry.getValue())
-                    .append(" — ")
-                    .append(String.format("%.0f pts", entry.getScore()))
-                    .append("\n");
-        }
-
-        return new OutMsg(sb.toString());
+    if (answer.getQuizId() == null) {
+      answer.setQuizId(quizId);
     }
 
+    // Ensure quiz is cached in Redis (pulls via gateway if missing)
+    redisService.ensureQuizCached(quizId);
 
-    @Data
-    public static class InMsg {
-        private String text; // player name for now
+    System.out.println(" Received answer from user " + answer.getUserId()
+        + " for question " + answer.getQuestionId()
+        + " - selected option: " + answer.getSelectedOption());
+
+    // Prevent duplicate answers
+    if (redisService.hasUserAnswered(quizId, answer.getQuestionId(), answer.getUserId())) {
+      System.out.println(" User " + answer.getUserId() + " already answered this question - ignoring duplicate");
+      return;
     }
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class OutMsg {
-        private String text;
+    // Load quiz (must exist now)
+    QuizDTO quiz = redisService.getQuiz(quizId);
+    if (quiz == null) {
+      System.err.println(" Quiz not found in Redis: " + quizId);
+      return;
     }
+
+    // Find the question
+    QuestionDTO question = quiz.getQuestions().stream()
+        .filter(q -> q.getId().equals(answer.getQuestionId()))
+        .findFirst()
+        .orElse(null);
+
+    if (question == null) {
+      System.err.println(" Question not found: " + answer.getQuestionId());
+      return;
+    }
+
+    boolean isCorrect = question.getCorrectOption().equals(answer.getSelectedOption());
+
+    // Save the raw answer
+    redisService.saveAnswer(answer);
+
+    // Update score
+    int newScore = redisService.getUserScore(quizId, answer.getUserId());
+    if (isCorrect) {
+      redisService.incrementUserScore(quizId, answer.getUserId(), 10);
+      newScore += 10;
+      System.out.println("CORRECT! User " + answer.getUserId() + " earned 10 points. New score: " + newScore);
+    } else {
+      System.out.println(" WRONG! User " + answer.getUserId() + " selected option "
+          + answer.getSelectedOption() + " but correct was " + question.getCorrectOption());
+    }
+
+    // Send per-user result
+    AnswerResultDTO result = new AnswerResultDTO(
+        answer.getUserId(),
+        answer.getQuestionId(),
+        isCorrect,
+        question.getCorrectOption(),
+        newScore
+    );
+
+    messagingTemplate.convertAndSend(
+        "/topic/quiz/" + quizId + "/user/" + answer.getUserId() + "/result",
+        result
+    );
+
+    // Broadcast updated leaderboard
+    LeaderboardDTO leaderboard = redisService.getLeaderboard(quizId);
+    messagingTemplate.convertAndSend(
+        "/topic/quiz/" + quizId + "/leaderboard",
+        leaderboard
+    );
+
+    System.out.println(" Leaderboard updated and broadcast to all participants");
+  }
+
+  // PARTICIPANT JOIN
+  @MessageMapping("/quiz/{quizId}/join")
+  public void handleJoin(@DestinationVariable Long quizId,
+                         @Payload String userId) {
+
+    System.out.println(" User " + userId + " joined quiz " + quizId);
+
+    // Ensure quiz cached first so new joiners get correct state
+    redisService.ensureQuizCached(quizId);
+
+    redisService.addParticipant(quizId, userId);
+
+    Long participantCount = redisService.getParticipantCount(quizId);
+    messagingTemplate.convertAndSend(
+        "/topic/quiz/" + quizId + "/participants",
+        participantCount
+    );
+
+    // Send current leaderboard
+    LeaderboardDTO leaderboard = redisService.getLeaderboard(quizId);
+    messagingTemplate.convertAndSend(
+        "/topic/quiz/" + quizId + "/leaderboard",
+        leaderboard
+    );
+
+    System.out.println(" User " + userId + " successfully joined. Total participants: " + participantCount);
+  }
+
+  // PARTICIPANT LEAVE
+  @MessageMapping("/quiz/{quizId}/leave")
+  public void handleLeave(@DestinationVariable Long quizId,
+                          @Payload String userId) {
+
+    System.out.println("User " + userId + " left quiz " + quizId);
+
+    redisService.removeParticipant(quizId, userId);
+
+    Long participantCount = redisService.getParticipantCount(quizId);
+    messagingTemplate.convertAndSend(
+        "/topic/quiz/" + quizId + "/participants",
+        participantCount
+    );
+  }
+
+  // ADMIN NEXT QUESTION
+  @MessageMapping("/quiz/{quizId}/admin/next-question")
+  public void handleNextQuestion(@DestinationVariable Long quizId,
+                                 @Payload QuizEventDTO event) {
+
+    System.out.println("Admin advancing to question " + event.getQuestionNumber() + " for quiz " + quizId);
+
+    if (event.getCurrentQuestion() != null) {
+      redisService.setCurrentQuestion(quizId, event.getCurrentQuestion().getId());
+    }
+
+    messagingTemplate.convertAndSend(
+        "/topic/quiz/" + quizId + "/event",
+        event
+    );
+
+    System.out.println("Question " + event.getQuestionNumber() + " broadcast to all participants");
+  }
+
+  // ADMIN END QUIZ
+  @MessageMapping("/quiz/{quizId}/admin/end")
+  public void handleEndQuiz(@DestinationVariable Long quizId) {
+
+    System.out.println(" Admin ending quiz " + quizId);
+
+    LeaderboardDTO finalLeaderboard = redisService.getLeaderboard(quizId);
+
+    QuizEventDTO endEvent = new QuizEventDTO();
+    endEvent.setQuizId(quizId);
+    endEvent.setEventType("QUIZ_ENDED");
+
+    messagingTemplate.convertAndSend(
+        "/topic/quiz/" + quizId + "/event",
+        endEvent
+    );
+
+    messagingTemplate.convertAndSend(
+        "/topic/quiz/" + quizId + "/final-results",
+        finalLeaderboard
+    );
+
+    System.out.println("Quiz " + quizId + " ended. Final leaderboard sent with "
+        + finalLeaderboard.getTotalParticipants() + " participants.");
+  }
 }
-

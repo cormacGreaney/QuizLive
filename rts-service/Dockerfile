@@ -2,17 +2,16 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copy quiz-shared first
-COPY ../quiz-shared /app/quiz-shared
-WORKDIR /app/quiz-shared
-RUN mvn clean install -DskipTests
+# Copy the rts-service pom and quiz-shared pom
+COPY rts-service/pom.xml ./pom.xml
+COPY quiz-shared/pom.xml ./quiz-shared/pom.xml
 
-# Copy RTS service
-COPY ../rts-service /app/rts-service
-WORKDIR /app/rts-service
+# Copy the source code
+COPY quiz-shared/src ./quiz-shared/src
+COPY rts-service/src ./src
 
-# Pre-download dependencies
-RUN mvn -q -DskipTests dependency:go-offline
+# Build quiz-shared first
+RUN mvn -f quiz-shared/pom.xml -q -DskipTests install
 
 # Build RTS
 RUN mvn -q -DskipTests package
@@ -22,7 +21,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Copy built jar
-COPY --from=build /app/rts-service/target/*.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
 
 # JVM options
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75"

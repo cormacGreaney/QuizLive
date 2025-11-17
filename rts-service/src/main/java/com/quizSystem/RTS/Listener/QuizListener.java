@@ -1,7 +1,7 @@
 package com.quizSystem.RTS.Listener;
 
-import com.quizSystem.shared.dto.QuestionDTO;
 import com.quizSystem.shared.dto.QuizDTO;
+import com.quizSystem.shared.dto.QuestionDTO;
 import com.quizSystem.RTS.service.RedisTestService;
 import com.quizSystem.RTS.ws.WebSocketService;
 import lombok.RequiredArgsConstructor;
@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class QuizListener {
 
-  private RedisTestService redisService;
-  private WebSocketService webSocketService;
+  private final RedisTestService redisService;
+  private final WebSocketService webSocketService;
 
   /**
    * Handles a quiz update: saves to Redis and broadcasts via WebSocket
@@ -35,20 +35,5 @@ public class QuizListener {
     webSocketService.broadcast(topic, quiz);
   }
 
-  public void handleQuestionUpdate(QuestionDTO question){
-    if(question == null || question.getId() == null){
-      System.err.println("Invalid question update received - missing ID.");
-      return;
-    }
-    saveQuestionToRedis(question);
-    broadcastQuestionUpdate(question);
-  }
 
-  private void saveQuestionToRedis(QuestionDTO question){
-    redisService.saveQuestion(question);
-  }
-
-  private void broadcastQuestionUpdate(QuestionDTO question){
-    String topic = "/topic/quiz/"+question.getQuizId();
-  }
 }

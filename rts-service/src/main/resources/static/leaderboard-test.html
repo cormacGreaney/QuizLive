@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Leaderboard Test</title>
+  <style>
+    body { font-family: Arial; max-width: 700px; margin: 40px auto; }
+    .controls { background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    input, button { padding: 10px; margin: 5px; font-size: 16px; }
+    button { background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #45a049; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #leaderboard { background: #fff; padding: 15px; border: 2px solid #ddd; border-radius: 8px; }
+    .entry { padding: 10px; margin: 5px 0; background: #f9f9f9; border-radius: 4px; display: flex; justify-content: space-between; }
+    .entry.highlight { background: #ffd700; font-weight: bold; }
+    .rank { font-weight: bold; color: #333; }
+    .nickname { flex: 1; margin: 0 15px; }
+    .score { color: #0066cc; font-weight: bold; }
+    .status { padding: 5px 10px; border-radius: 4px; display: inline-block; margin-left: 10px; }
+    .status.connected { background: #4CAF50; color: white; }
+    .status.disconnected { background: #f44336; color: white; }
+  </style>
+</head>
+<body>
+<h2> Leaderboard Test (JSON)</h2>
+
+<div class="controls">
+  <div>
+    <input id="quizId" placeholder="Quiz ID" value="quiz123" style="width: 150px;" />
+    <input id="nickname" placeholder="Your nickname" style="width: 200px;" />
+    <span id="status" class="status disconnected">Disconnected</span>
+  </div>
+  <div>
+    <button id="join">Join Quiz</button>
+    <button id="answer" disabled>Submit Answer</button>
+    <button id="disconnect" disabled>Disconnect</button>
+  </div>
+</div>
+
+<h3>Live Leaderboard</h3>
+<div id="leaderboard">
+  <p style="color: #999;">Connect to a quiz to see leaderboard...</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+<script>
+  let stomp, nickname, quizId;
+
+  function updateStatus(connected) {
+    const statusEl = document.getElementById('status');
+    if (connected) {
+      statusEl.textContent = 'Connected';
+      statusEl.className = 'status connected';
+    } else {
+      statusEl.textContent = 'Disconnected';
+      statusEl.className = 'status disconnected';
+    }
+  }
+
+  function renderLeaderboard(data) {
+    const lb = document.getElementById('leaderboard');
+
+    if (!data || !data.entries || data.entries.length === 0) {
+      lb.innerHTML = '<p style="color: #999;">No participants yet...</p>';
+      return;
+    }
+
+    let html = `<div style="margin-bottom: 15px;">
+            <strong>Quiz: ${data.quizId}</strong> |
+            <strong>Participants: ${data.totalParticipants}</strong> |
+            <span style="color: #666;">Updated: ${new Date(data.timestamp).toLocaleTimeString()}</span>
+        </div>`;
+
+    data.entries.forEach(entry => {
+      const isMe = entry.nickname === nickname;
+      const className = isMe ? 'entry highlight' : 'entry';
+      html += `<div class="${className}">
+                <span class="rank">#${entry.rank}</span>
+                <span class="nickname">${entry.nickname}${isMe ? ' (You)' : ''}</span>
+                <span class="score">${Math.round(entry.score)} pts</span>
+            </div>`;
+    });
+
+    lb.innerHTML = html;
+  }
+
+  document.getElementById('join').onclick = () => {
+    nickname = document.getElementById('nickname').value.trim();
+    quizId = document.getElementById('quizId').value.trim();
+
+    if (!nickname) return alert('Enter your nickname!');
+    if (!quizId) return alert('Enter quiz ID!');
+
+    const sock = new SockJS('http://localhost:8083/ws');
+    stomp = Stomp.over(sock);
+    stomp.debug = null;
+
+    stomp.connect({}, () => {
+      console.log('Connected as', nickname, 'to quiz', quizId);
+      updateStatus(true);
+      document.getElementById('answer').disabled = false;
+      document.getElementById('disconnect').disabled = false;
+      document.getElementById('join').disabled = true;
+
+      stomp.subscribe(`/topic/quiz/${quizId}/leaderboard`, msg => {
+        const data = JSON.parse(msg.body);
+        console.log('Leaderboard update:', data);
+        renderLeaderboard(data);
+      });
+
+      stomp.send(`/app/quiz/${quizId}/join`, {}, JSON.stringify({
+        nickname: nickname
+      }));
+    });
+  };
+
+  document.getElementById('answer').onclick = () => {
+    stomp.send(`/app/quiz/${quizId}/answer`, {}, JSON.stringify({
+      nickname: nickname,
+      selectedOption: Math.floor(Math.random() * 4) + 1
+    }));
+  };
+
+  document.getElementById('disconnect').onclick = () => {
+    if (stomp) {
+      stomp.disconnect(() => {
+        updateStatus(false);
+        document.getElementById('answer').disabled = true;
+        document.getElementById('disconnect').disabled = true;
+        document.getElementById('join').disabled = false;
+        console.log('Disconnected');
+      });
+    }
+  };
+</script>
+</body>
+</html>

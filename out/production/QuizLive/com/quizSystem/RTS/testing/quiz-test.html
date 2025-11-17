@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Quiz Demo</title>
+    <style>
+        body { font-family: Arial; max-width: 500px; margin: 40px auto; }
+        #leaderboard { white-space: pre-line; background: #f7f7f7; padding: 15px; border-radius: 8px; }
+        input, button { padding: 8px; margin: 5px; }
+    </style>
+</head>
+<body>
+<h2> Quiz Demo</h2>
+
+<input id="name" placeholder="Enter your name" />
+<button id="join">Join Game</button>
+<button id="answer" disabled>Submit Answer</button>
+
+<h3>Live Leaderboard</h3>
+<div id="leaderboard">No data yet...</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+<script>
+    let stomp, player;
+
+    const log = text => document.getElementById("leaderboard").textContent = text;
+
+    document.getElementById("join").onclick = () => {
+        player = document.getElementById("name").value.trim();
+        if (!player) return alert("Enter your name!");
+
+        const sock = new SockJS("http://localhost:8080/ws");
+        stomp = Stomp.over(sock);
+        stomp.debug = () => {};
+        stomp.connect({}, () => {
+            console.log("connected as " + player);
+            document.getElementById("answer").disabled = false;
+            stomp.subscribe("/topic/leaderboard", msg => log(msg.body));
+        });
+    };
+
+    document.getElementById("answer").onclick = () => {
+        stomp.send("/app/answer", {}, JSON.stringify({ text: player }));
+    };
+</script>
+</body>
+</html>

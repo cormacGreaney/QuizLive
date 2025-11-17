@@ -48,7 +48,7 @@ spring:
           predicates:
             - Path=/rts/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
         # RTS (WebSocket) in Docker
         - id: rts_ws
