@@ -62,10 +62,10 @@ services:
       - "5173:80"
 
   qms-service:
+    container_name: qms-service   # <-- must be here, not under build
     build:
-      context: ..
+      context: ../    # root of QuizLive repo
       dockerfile: qms-service/Dockerfile
-    container_name: qms-service
     environment:
       SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/qms_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
       DB_USERNAME: ${DB_USERNAME}
@@ -80,6 +80,7 @@ services:
 
     ports:
       - "8082:8082"
+
 
   redis:
     image: redis:7-alpine

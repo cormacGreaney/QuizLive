@@ -1,6 +1,7 @@
 /**package com.quizSystem.RTS.Controller;
 
 import com.quizSystem.RTS.Listener.QuizListener;
+import com.quizSystem.shared.dto.QuestionDTO;
 import com.quizSystem.shared.dto.QuizDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
