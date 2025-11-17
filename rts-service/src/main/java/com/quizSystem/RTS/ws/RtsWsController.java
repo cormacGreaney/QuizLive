@@ -59,20 +59,29 @@ public class RtsWsController {
 
     // Load quiz (must exist now)
     QuizDTO quiz = redisService.getQuiz(quizId);
-    if (quiz == null) {
-      System.err.println(" Quiz not found in Redis: " + quizId);
-      return;
+    QuestionDTO question = null;
+    if (quiz != null) {
+      question = quiz.getQuestions().stream()
+          .filter(q -> q.getId().equals(answer.getQuestionId()))
+          .findFirst()
+          .orElse(null);
     }
 
-    // Find the question
-    QuestionDTO question = quiz.getQuestions().stream()
-        .filter(q -> q.getId().equals(answer.getQuestionId()))
-        .findFirst()
-        .orElse(null);
-
+    // ⬇️ NEW: if the question isn't in cache (added after LIVE), refresh once from QMS
     if (question == null) {
-      System.err.println(" Question not found: " + answer.getQuestionId());
-      return;
+      System.out.println(" Question " + answer.getQuestionId() + " not found in cache for quiz " + quizId + "; refreshing from QMS");
+      redisService.refreshQuizFromQms(quizId);
+      quiz = redisService.getQuiz(quizId);
+      if (quiz != null) {
+        question = quiz.getQuestions().stream()
+            .filter(q -> q.getId().equals(answer.getQuestionId()))
+            .findFirst()
+            .orElse(null);
+      }
+      if (question == null) {
+        System.err.println(" Question still not found after refresh: " + answer.getQuestionId());
+        return;
+      }
     }
 
     boolean isCorrect = question.getCorrectOption().equals(answer.getSelectedOption());
@@ -111,8 +120,6 @@ public class RtsWsController {
         "/topic/quiz/" + quizId + "/leaderboard",
         leaderboard
     );
-
-    System.out.println(" Leaderboard updated and broadcast to all participants");
   }
 
   // PARTICIPANT JOIN
@@ -139,16 +146,12 @@ public class RtsWsController {
         "/topic/quiz/" + quizId + "/leaderboard",
         leaderboard
     );
-
-    System.out.println(" User " + userId + " successfully joined. Total participants: " + participantCount);
   }
 
   // PARTICIPANT LEAVE
   @MessageMapping("/quiz/{quizId}/leave")
   public void handleLeave(@DestinationVariable Long quizId,
                           @Payload String userId) {
-
-    System.out.println("User " + userId + " left quiz " + quizId);
 
     redisService.removeParticipant(quizId, userId);
 
@@ -164,8 +167,6 @@ public class RtsWsController {
   public void handleNextQuestion(@DestinationVariable Long quizId,
                                  @Payload QuizEventDTO event) {
 
-    System.out.println("Admin advancing to question " + event.getQuestionNumber() + " for quiz " + quizId);
-
     if (event.getCurrentQuestion() != null) {
       redisService.setCurrentQuestion(quizId, event.getCurrentQuestion().getId());
     }
@@ -174,15 +175,11 @@ public class RtsWsController {
         "/topic/quiz/" + quizId + "/event",
         event
     );
-
-    System.out.println("Question " + event.getQuestionNumber() + " broadcast to all participants");
   }
 
   // ADMIN END QUIZ
   @MessageMapping("/quiz/{quizId}/admin/end")
   public void handleEndQuiz(@DestinationVariable Long quizId) {
-
-    System.out.println(" Admin ending quiz " + quizId);
 
     LeaderboardDTO finalLeaderboard = redisService.getLeaderboard(quizId);
 
@@ -199,8 +196,5 @@ public class RtsWsController {
         "/topic/quiz/" + quizId + "/final-results",
         finalLeaderboard
     );
-
-    System.out.println("Quiz " + quizId + " ended. Final leaderboard sent with "
-        + finalLeaderboard.getTotalParticipants() + " participants.");
   }
 }
