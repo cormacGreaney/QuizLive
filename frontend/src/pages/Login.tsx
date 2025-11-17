@@ -33,7 +33,7 @@ export default function Login() {
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent'
       }}>
-        Live Quiz
+        QuizLive
       </h1>
       <p style={{ marginBottom: '1.5rem', color: '#555' }}>
         Sign in to continue
