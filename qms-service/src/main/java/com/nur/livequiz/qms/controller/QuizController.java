@@ -19,6 +19,7 @@ import java.util.List;
 public class QuizController {
     private final QuizRepository quizRepository;
     private final QuestionRepository questionRepository;
+    @SuppressWarnings("unused")
     private final QuizService quizService;
 
     public QuizController(QuizRepository quizRepository, QuestionRepository questionRepository, QuizService quizService) {
@@ -103,8 +104,10 @@ public class QuizController {
             throw new BadRequest("questionText is required");
         if (opts.isEmpty())
             throw new BadRequest("options must contain at least one value");
-        if (req.getCorrectOption() == null || req.getCorrectOption() < 0 || req.getCorrectOption() >= opts.size())
-            throw new BadRequest("correctOption must be a valid index within options");
+
+        // FIX: accept 1-based correctOption from the frontend
+        if (req.getCorrectOption() == null || req.getCorrectOption() < 1 || req.getCorrectOption() > opts.size())
+            throw new BadRequest("correctOption must be between 1 and " + opts.size());
 
         Quiz quiz = quizRepository.findByIdAndCreatedBy(id, userId)
                 .orElseThrow(() -> new ForbiddenException("Not found or not owned"));
@@ -112,7 +115,7 @@ public class QuizController {
         Question q = new Question();
         q.setQuestionText(req.getQuestionText());
         q.setOptions(opts);
-        q.setCorrectOption(req.getCorrectOption());
+        q.setCorrectOption(req.getCorrectOption()); // store 1-based to match clients
         q.setQuiz(quiz);
         questionRepository.save(q);
 
@@ -131,16 +134,19 @@ public class QuizController {
             throw new BadRequest("questionText is required");
         if (opts.isEmpty())
             throw new BadRequest("options must contain at least one value");
-        if (req.getCorrectOption() == null || req.getCorrectOption() < 0 || req.getCorrectOption() >= opts.size())
-            throw new BadRequest("correctOption must be a valid index within options");
+
+        // FIX: accept 1-based correctOption from the frontend
+        if (req.getCorrectOption() == null || req.getCorrectOption() < 1 || req.getCorrectOption() > opts.size())
+            throw new BadRequest("correctOption must be between 1 and " + opts.size());
 
         quizRepository.findByIdAndCreatedBy(quizId, userId)
                 .orElseThrow(() -> new ForbiddenException("Not found or not owned"));
+
         Question q = questionRepository.findById(questionId)
                 .orElseThrow(() -> new BadRequest("Question not found"));
         q.setQuestionText(req.getQuestionText());
         q.setOptions(opts);
-        q.setCorrectOption(req.getCorrectOption());
+        q.setCorrectOption(req.getCorrectOption()); // keep 1-based
         questionRepository.save(q);
 
         return quizRepository.findByIdWithQuestionsByOwner(quizId, userId).orElseThrow();
