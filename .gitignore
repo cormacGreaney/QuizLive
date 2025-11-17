@@ -1,0 +1,40 @@
+﻿# Build outputs
+**/target/
+**/*.log
+
+# IDE
+.idea/
+.vscode/
+
+# Maven/Java metadata
+**/.classpath
+**/.project
+**/.settings/
+**/*.iml
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Env files (never commit real secrets)
+.env
+infra/.env
+infra/.env.*.local
+frontend/.env
+auth-service/.env
+qms-service/.env
+rts-service/.env
+
+# Node
+**/node_modules/
+**/dist/
+**/.parcel-cache/
+**/pnpm-lock.yaml
+**/package-lock.json
+!frontend/package-lock.json
+**/yarn.lock
+
+# Env
+.env
+frontend/.env
+infra/.env

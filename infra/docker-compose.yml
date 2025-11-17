@@ -1,0 +1,108 @@
+﻿version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: quiz_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  auth-service:
+    build:
+      context: ../auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    environment:
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_ALLOWED_REDIRECT_URIS: ${GOOGLE_ALLOWED_REDIRECT_URIS}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+
+  api-gateway:
+    build:
+      context: ../api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    volumes:
+      - ./gateway-application.yaml:/config/application.yaml:ro
+    depends_on:
+      auth-service:
+        condition: service_started
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE: "http://localhost:8080"
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    container_name: quiz_frontend
+    depends_on:
+      api-gateway:
+        condition: service_started
+    ports:
+      - "5173:80"
+
+  qms-service:
+    container_name: qms-service
+    build:
+      context: ../
+      dockerfile: qms-service/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/qms_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RTS_BASE_URL: "http://rts-service:8083"   # QMS -> RTS inside Docker
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rts-service:
+        condition: service_started
+    ports:
+      - "8082:8082"
+
+  redis:
+    image: redis:7-alpine
+    container_name: quiz_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  rts-service:
+    build:
+      context: ../
+      dockerfile: rts-service/Dockerfile
+    container_name: rts-service
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      GATEWAY_BASE_URL: "http://api-gateway:8080"  # RTS -> Gateway inside Docker
+    depends_on:
+      redis:
+        condition: service_healthy
+      api-gateway:
+        condition: service_started
+    ports:
+      - "8083:8083"

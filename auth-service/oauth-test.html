@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <title>Google OAuth Test</title>
+  <body style="font-family:system-ui;padding:20px">
+    <h1>Google OAuth Test</h1>
+    <p id="status">Ready.</p>
+    <button id="login">Sign in with Google</button>
+    <pre id="out" style="white-space:pre-wrap;background:#f5f5f5;padding:12px;border-radius:8px"></pre>
+    <script>
+    const CLIENT_ID = "google-id-here"; // replace
+    const REDIRECT = `${location.origin}/oauth2/callback/google/`; // <- force trailing slash
+
+    function buildAuthUrl() {
+        const p = new URLSearchParams({
+        client_id: CLIENT_ID,
+        redirect_uri: REDIRECT,
+        response_type: "code",
+        scope: "openid email profile",
+        prompt: "select_account",
+        access_type: "offline"
+        });
+        return "https://accounts.google.com/o/oauth2/v2/auth?" + p.toString();
+    }
+
+    document.getElementById("login").onclick = () => location.href = buildAuthUrl();
+
+    (async () => {
+        const u = new URL(location.href);
+        const code = u.searchParams.get("code");
+        if (!code) return;
+
+        document.getElementById("status").textContent = "Exchanging code with auth-service…";
+        try {
+        const res = await fetch("http://localhost:8081/auth/login/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code, redirectUri: REDIRECT }) // <- same trailing slash
+        });
+        const j = await res.json();
+        document.getElementById("out").textContent = JSON.stringify(j, null, 2);
+        if (j.accessToken) {
+            localStorage.setItem("access_token", j.accessToken);
+            localStorage.setItem("refresh_token", j.refreshToken);
+            document.getElementById("status").textContent = "Login OK. Tokens stored.";
+        } else {
+            document.getElementById("status").textContent = "Login failed. See response below.";
+        }
+        } catch (e) {
+        document.getElementById("status").textContent = "Request failed. See console.";
+        console.error(e);
+        }
+    })();
+    </script>
+  </body>
+</html>

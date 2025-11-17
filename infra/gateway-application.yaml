@@ -1,0 +1,82 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        # Put actuator first so it strips /auth properly
+        - id: auth_actuator
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/auth/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: auth_service
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=0
+
+        # QMS in Docker
+        - id: qms_actuator
+          uri: http://qms-service:8082
+          predicates:
+            - Path=/qms/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: qms_service
+          uri: http://qms-service:8082
+          predicates:
+            - Path=/qms/**
+          filters:
+            - StripPrefix=1
+
+        # RTS (HTTP actuator + any future REST)
+        - id: rts_actuator
+          uri: http://rts-service:8083
+          predicates:
+            - Path=/rts/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: rts_http
+          uri: http://rts-service:8083
+          predicates:
+            - Path=/rts/**
+          filters:
+            - StripPrefix=0
+
+        # RTS (WebSocket) in Docker
+        - id: rts_ws
+          uri: ws://rts-service:8083
+          predicates:
+            - Path=/ws/**
+          filters:
+            - StripPrefix=0
+
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+            allowedMethods: [ "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS" ]
+            allowedHeaders: [ "*" ]
+            allowCredentials: true
+
+      default-filters:
+        - AddResponseHeader=X-Gateway, QuizAPI
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      access: read-only

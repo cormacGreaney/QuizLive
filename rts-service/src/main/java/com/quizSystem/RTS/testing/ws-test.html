@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<body>
+<button id="connect">Connect</button>
+<button id="send">Send Ping</button>
+<pre id="log"></pre>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+<script>
+    let stomp;
+    const log = m => document.getElementById("log").textContent += m + "\n";
+
+    document.getElementById("connect").onclick = () => {
+        const socket = new SockJS("http://localhost:8080/ws");
+        stomp = Stomp.over(socket);
+        stomp.debug = () => {}; // silence logs
+        stomp.connect({}, () => {
+            log("connected");
+            stomp.subscribe("/topic/pong", msg => log("recv: " + msg.body));
+        });
+    };
+
+    document.getElementById("send").onclick = () => {
+        stomp.send("/app/ping", {}, JSON.stringify({ text: "hello" }));
+        log("sent ping");
+    };
+</script>
+</body>
+</html>

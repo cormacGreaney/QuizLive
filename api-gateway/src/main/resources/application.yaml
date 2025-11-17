@@ -1,0 +1,74 @@
+server:
+  port: 8080  # Gateway runs on port 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        # (Optional) test route
+        - id: test_controller
+          uri: http://localhost:8080
+          predicates:
+            - Path=/test
+
+        # ---- put actuator route FIRST ----
+        - id: auth_actuator
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/actuator/**
+          filters:
+            - StripPrefix=1
+
+        # Generic auth API route
+        - id: auth_service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=0
+
+        # Quiz service
+        - id: quiz_service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/quiz/**
+          filters:
+            - StripPrefix=0
+
+        # QMS (HTTP REST)
+        - id: qms_actuator
+          uri: http://localhost:8082
+          predicates:
+            - Path=/qms/actuator/**
+          filters:
+            - StripPrefix=1
+
+        - id: qms_service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/qms/**
+          filters:
+            - StripPrefix=1
+
+        # RTS (WebSocket/STOMP)
+        # Gateway will proxy WebSocket upgrade to RTS
+        - id: rts_ws
+          uri: ws://localhost:8083
+          predicates:
+            - Path=/ws/**
+          filters:
+            - StripPrefix=0
+
+
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+            allowedMethods: [ "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS" ]
+            allowedHeaders: [ "*" ]
+            allowCredentials: true
+
+      default-filters:
+        - AddResponseHeader=X-Gateway, QuizAPI
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
