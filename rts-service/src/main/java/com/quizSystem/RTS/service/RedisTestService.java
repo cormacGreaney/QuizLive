@@ -24,25 +24,30 @@ public class RedisTestService {
     this.redis = redis;
   }
 
-  // =============== NEW ===============
+  // =============== NEW/UPDATED ===============
   /** If quiz JSON is not in Redis, fetch from QMS via gateway and cache it. */
   public void ensureQuizCached(Long quizId) {
     String key = "quiz:" + quizId;
     String existing = redis.opsForValue().get(key);
     if (existing != null) return;
+    refreshQuizFromQms(quizId);
+  }
+
+  /** Force-refresh quiz JSON from QMS and overwrite cache. */
+  public void refreshQuizFromQms(Long quizId) {
     try {
       QuizDTO dto = qmsClient.fetchQuiz(quizId);
       if (dto != null && dto.getId() != null) {
         saveQuiz(dto);
-        System.out.println("ensureQuizCached: cached quiz " + quizId + " from QMS");
+        System.out.println("refreshQuizFromQms: cached quiz " + quizId + " from QMS");
       } else {
-        System.err.println("ensureQuizCached: QMS returned null for quiz " + quizId);
+        System.err.println("refreshQuizFromQms: QMS returned null for quiz " + quizId);
       }
     } catch (Exception e) {
-      System.err.println("ensureQuizCached failed for quiz " + quizId + ": " + e.getMessage());
+      System.err.println("refreshQuizFromQms failed for quiz " + quizId + ": " + e.getMessage());
     }
   }
-  // ===================================
+  // ==========================================
 
   // =========================
   // QUIZ STORAGE (JSON)
@@ -122,7 +127,7 @@ public class RedisTestService {
   public void incrementUserScore(Long quizId, String userId, int points) {
     String key = "quiz:" + quizId + ":scores";
     Long newScore = redis.opsForHash().increment(key, userId, points);
-    System.out.println("✅ Incremented score for " + userId + " by " + points + " (now " + newScore + ")");
+    System.out.println("Incremented score for " + userId + " by " + points + " (now " + newScore + ")");
   }
 
   public int getUserScore(Long quizId, String userId) {
@@ -151,7 +156,7 @@ public class RedisTestService {
       sortedScores.get(i).setRank(i + 1);
     }
 
-    // IMPORTANT: use participants set size, not number of scored users
+    // use participants set size, not number of scored users
     int totalParticipants = Math.toIntExact(getParticipantCount(quizId));
 
     return new LeaderboardDTO(quizId, sortedScores, totalParticipants);
