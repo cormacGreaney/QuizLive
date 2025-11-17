@@ -1,6 +1,5 @@
 package com.quizSystem.RTS.Listener;
 
-import com.quizSystem.shared.dto.QuestionDTO;
 import com.quizSystem.shared.dto.QuizDTO;
 import com.quizSystem.shared.dto.QuestionDTO;
 import com.quizSystem.RTS.service.RedisTestService;
@@ -36,20 +35,5 @@ public class QuizListener {
     webSocketService.broadcast(topic, quiz);
   }
 
-  public void handleQuestionUpdate(QuestionDTO question){
-    if(question == null || question.getId() == null){
-      System.err.println("Invalid question update received - missing ID.");
-      return;
-    }
-    saveQuestionToRedis(question);
-    broadcastQuestionUpdate(question);
-  }
 
-  private void saveQuestionToRedis(QuestionDTO question){
-    redisService.saveQuestion(question);
-  }
-
-  private void broadcastQuestionUpdate(QuestionDTO question){
-    String topic = "/topic/quiz/"+question.getQuizId();
-  }
 }
