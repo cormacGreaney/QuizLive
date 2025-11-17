@@ -14,12 +14,9 @@ public class QmsClient {
 
   private final WebClient webClient;
 
-  // Injected from application.properties / env var
-  public QmsClient(@Value("${gateway.base-url}") String baseUrl) {
-    // baseUrl SHOULD be http://api-gateway:8080 in Docker, http://localhost:8080 in local
-    this.webClient = WebClient.builder()
-        .baseUrl(baseUrl)
-        .build();
+  // Defaults to Docker service name; override with GATEWAY_BASE_URL or gateway.base-url
+  public QmsClient(@Value("${gateway.base-url:http://api-gateway:8080}") String baseUrl) {
+    this.webClient = WebClient.builder().baseUrl(baseUrl).build();
     log.info("QmsClient using baseUrl={}", baseUrl);
   }
 
@@ -30,6 +27,6 @@ public class QmsClient {
         .accept(MediaType.APPLICATION_JSON)
         .retrieve()
         .bodyToMono(QuizDTO.class)
-        .block(); // simple: block for result in this background service
+        .block();
   }
 }

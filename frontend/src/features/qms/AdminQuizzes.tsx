@@ -115,7 +115,7 @@ export default function AdminQuizzes() {
       await endQuiz(quizId);
       await refresh();
     } catch (e: any) {
-      setError(e?.message || 'Failed to end quiz');
+    setError(e?.message || 'Failed to end quiz');
     } finally {
       setLoading(false);
     }
@@ -296,7 +296,6 @@ export default function AdminQuizzes() {
                           Delete
                         </button>
                         <button style={btn} onClick={() => copyLink(q.id)}>Copy Participant Link</button>
-                        {/* Open the single, page-level modal (rendered outside the table) */}
                         <button style={btn} onClick={() => setQrForQuizId(q.id)}>Show QR</button>
                       </div>
                     </td>
@@ -313,10 +312,7 @@ export default function AdminQuizzes() {
                               {q.questions.map((question) => (
                                 <div key={question.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: 'white', border: '1px solid #e5e7eb', borderRadius: 8 }}>
                                   <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 500, marginBottom: 4 }}>{question.questionText}</div>
-                                    <div style={{ fontSize: 12, color: '#6b7280' }}>
-                                      {question.id} · {question.options && JSON.parse(typeof question.options === 'string' ? question.options : '[]').length || 0} options
-                                    </div>
+                                    <div style={{ fontWeight: 500 }}>{question.questionText}</div>
                                   </div>
                                   <div style={{ display: 'flex', gap: 8 }}>
                                     <button
