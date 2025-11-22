@@ -1,5 +1,11 @@
 ## JMeter Load Test Plan (QuizLive)
 
+> **📋 For Load Testing Report Template**: See `load-test-report-template.md` for a complete report aligned with the standard load testing report template.
+
+> **🚀 Quick Start**: See `test-execution-guide.md` for step-by-step instructions on running different test types (Smoke, Load, Stress).
+
+> **📊 Test Scenarios**: See `test-scenarios-reference.md` for detailed scenario configurations and mappings.
+
 ### 1. Objectives
 - Validate that the end-to-end path (`frontend → gateway → services → DB/Redis`) sustains the target concurrency without SLA breaches.
 - Catch resource leaks and thread starvation in `qms-service`, `api-gateway`, and `rts-service`.
